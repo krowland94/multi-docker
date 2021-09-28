@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t kkrowland/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true USERNAME/react-test npm test
+
+after_success:
+  - docker build -t kkrowland/multi-client -f ./client
+  - docker build -t kkrowland/multi-nginx ./nginx
+  - docker build -t kkrowland/multi-server ./server
+  - docker build -t kkrowland/multi-worker ./worker
+  # Login into docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to DockerHub
+  - docker push kkrowland/multi-client
+  - docker push kkrowland/multi-nginx
+  - docker push kkrowland/multi-server
+  - docker push kkrowland/multi-worker
